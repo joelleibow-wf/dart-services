@@ -71,13 +71,12 @@ class Pub {
     try {
       // Create pubspec file.
       File pubspecFile = new File(path.join(tempDir.path, 'pubspec.yaml'));
-      String specContents = 'name: temp\ndependencies:\n' +
-          packages.map((p) => '  ${p}: any').join('\n');
+      String specContents = 'name: temp\ndependencies:\n  web_skin_dart:\n    git:\n      url: git@github.com:Workiva/web_skin_dart.git\n      ref: 0.0.11\n';
       pubspecFile.writeAsStringSync(specContents, flush: true);
 
       // Run pub.
       return Process
-          .run('pub', ['get'], workingDirectory: tempDir.path)
+          .run('/usr/local/bin/pub', ['get'], workingDirectory: tempDir.path)
           .timeout(new Duration(seconds: 20))
           .then((ProcessResult result) {
         if (result.exitCode != 0) {
@@ -93,6 +92,10 @@ class Pub {
         return new Future.value(
             _parseLockContents(pubspecLock.readAsStringSync()));
       }).whenComplete(() {
+        Directory tempPubGetDir = new Directory(path.join(tempDir.path, 'packages'));
+        print('Move the pub get results to the cache directory ${_cacheDir.path}');
+        if (_cacheDir.listSync().isEmpty) tempPubGetDir.renameSync(_cacheDir.path);
+        print('Remove the temp directory ${tempDir.path}');
         tempDir.deleteSync(recursive: true);
       });
     } catch (e, st) {
@@ -106,17 +109,17 @@ class Pub {
    */
   Future<Directory> getPackageLibDir(PackageInfo packageInfo) {
     try {
-      String dirName = '${packageInfo.name}-${packageInfo.version}';
-      Directory packageDir = new Directory(path.join(_cacheDir.path, dirName));
-      Directory libDir = new Directory(path.join(packageDir.path, 'lib'));
+      Directory packageDir = new Directory(path.join(_cacheDir.path, packageInfo.name));
 
-      if (packageDir.existsSync() && libDir.existsSync()) {
-        return new Future.value(libDir);
+      if (packageDir.existsSync()) {
+        return new Future.value(packageDir);
+      } else {
+        throw 'The package doesn\'t exist where you think it does!!';
       }
 
-      return _populatePackage(packageInfo, _cacheDir, packageDir).then((_) {
-        return libDir;
-      });
+      // return _populatePackage(packageInfo, _cacheDir, packageDir).then((_) {
+      //   return libDir;
+      // });
     } catch (e, st) {
       _logger.severe('Error getting package ${packageInfo}: ${e}\n${st}');
       return new Future.error(e);

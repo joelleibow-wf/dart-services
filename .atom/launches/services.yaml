@@ -3,6 +3,6 @@ type: cli
 path: bin/services.dart
 
 cli:
-  args: 
+  args: --port 8082
   checked: true
   debug: true

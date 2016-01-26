@@ -24,7 +24,7 @@ final Duration _standardExpiration = new Duration(hours: 1);
 final Logger _logger = new Logger('common_server');
 
 /// Toggle to on to enable `package:` support.
-final bool enablePackages = false;
+final bool enablePackages = true;
 
 abstract class ServerCache {
   Future<String> get(String key);
